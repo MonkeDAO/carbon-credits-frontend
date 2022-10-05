@@ -59,6 +59,7 @@ function Purchase() {
               className="bg-white border-2 text-center border-[#184623] py-4"
               placeholder="20 tons"
               value={tons}
+              onChange={(e) => setTons(e.target.value)}
             />
             <button
               className="bg-[#4A8F5D] h-full text-white py-4 font-extrabold"
