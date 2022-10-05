@@ -27,7 +27,7 @@ function Purchase() {
   return (
     <Layout>
       <h2 className="text-[#184623] text-3xl font-medium pt-24">
-        Carbon Pool Admin
+        Purchase Carbon Credits
       </h2>
       <p className="text-left py-6">
         MonkeDAO, together with The Solana Foundation, is committed to keeping
