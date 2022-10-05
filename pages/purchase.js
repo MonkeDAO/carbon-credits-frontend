@@ -50,7 +50,7 @@ function Purchase() {
           <div className="grid grid-cols-[1fr_2fr_1fr] items-center mx-auto">
             <button
               className="bg-[#4A8F5D] h-full text-white py-4 font-extrabold"
-              onClick={() => setTons(tons - 1)}
+              onClick={() => setTons(parseInt(tons) - 1)}
             >
               -
             </button>
@@ -63,7 +63,7 @@ function Purchase() {
             />
             <button
               className="bg-[#4A8F5D] h-full text-white py-4 font-extrabold"
-              onClick={() => setTons(tons + 1)}
+              onClick={() => setTons(parseInt(tons) + 1)}
             >
               +
             </button>
