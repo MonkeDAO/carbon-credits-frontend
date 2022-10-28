@@ -1,8 +1,11 @@
 import { useState } from "react";
 import Layout from "../components/Layout";
+import PurchaseModal from "../components/purchase-modal";
 
 function Purchase() {
   const [tons, setTons] = useState(2);
+  const [showModal, setShowModal] = useState(false);
+
   const transactions = [
     {
       date: "12/02/22",
@@ -29,6 +32,7 @@ function Purchase() {
       <h2 className="text-[#184623] text-3xl font-medium pt-24">
         Purchase Carbon Credits
       </h2>
+      {showModal && <PurchaseModal setShowModal={setShowModal} />}
       <p className="text-left py-6">
         MonkeDAO, together with The Solana Foundation, is committed to keeping
         the network carbon neutral in 2022 and in the future and encourages all
@@ -46,7 +50,6 @@ function Purchase() {
       >
         <div className="max-w-xs mx-auto grid gap-4">
           <span className="font-bold text-2xl">Purchase Credits</span>
-          <span>2143 tons available</span>
           <div className="grid grid-cols-[1fr_2fr_1fr] items-center mx-auto">
             <button
               className="bg-[#4A8F5D] h-full text-white py-4 font-extrabold"
@@ -68,11 +71,16 @@ function Purchase() {
               +
             </button>
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center flex-col">
             <span>Total Cost</span>
-            <p className="font-extrabold text-2xl">$450</p>
+            <p className="font-extrabold text-2xl text-[#184623] my-2">
+              $450 (12.23 SOL)
+            </p>
           </div>
-          <button className="text-white bg-[#184623] py-3 hover:opacity-50">
+          <button
+            className="text-white bg-[#184623] py-3 hover:opacity-50"
+            onClick={() => setShowModal(true)}
+          >
             Purchase
           </button>
         </div>
