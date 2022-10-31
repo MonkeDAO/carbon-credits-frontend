@@ -2,11 +2,13 @@ import { useState } from "react";
 import Layout from "../components/Layout";
 
 function Admin() {
-  const [option, setOption] = useState(0);
   const [showOrders, setShowOrders] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(2022);
+
   const transactions = [
     {
-      date: "12/02/22",
+      date: new Date("12/04/22"),
       amount: "13",
       cost: "2560",
       link: "https://monkedao.io/",
@@ -14,7 +16,7 @@ function Admin() {
       expiryDate: "12/02/23",
     },
     {
-      date: "12/02/22",
+      date: new Date("12/02/22"),
       amount: "14",
       cost: "2780",
       link: "https://monkedao.io/",
@@ -22,7 +24,7 @@ function Admin() {
       expiryDate: "12/02/23",
     },
     {
-      date: "12/02/22",
+      date: new Date("12/02/23"),
       amount: "2",
       cost: "671",
       link: "https://monkedao.io/",
@@ -30,6 +32,57 @@ function Admin() {
       expiryDate: "12/02/23",
     },
   ];
+
+  const yearChoices = [2022, 2023, 2024];
+
+  const filteredTransactions = transactions.filter((transaction) => {
+    return (
+      transaction.date.getFullYear() === parseInt(selectedYear) &&
+      transaction.date.getMonth() === parseInt(selectedMonth) - 1
+    );
+  });
+
+  const DateSelection = () => {
+    return (
+      <div className="flex gap-2">
+        <div className="text-white border-2 border-[#184623] px-2 py-1">
+          <select
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="bg-transparent text-black"
+            defaultValue={selectedMonth}
+          >
+            <option value={1}>January</option>
+            <option value={2}>February</option>
+            <option value={3}>March</option>
+            <option value={4}>April</option>
+            <option value={5}>May</option>
+            <option value={6}>June</option>
+            <option value={7}>July</option>
+            <option value={8}>August</option>
+            <option value={9}>September</option>
+            <option value={10}>October</option>
+            <option value={11}>November</option>
+            <option value={12}>December</option>
+          </select>
+        </div>
+        <div className="text-white border-2 border-[#184623] px-2 py-1">
+          <select
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="bg-transparent text-black"
+            defaultValue={selectedYear}
+          >
+            {yearChoices.map((year, index) => {
+              return (
+                <option key={index} value={year}>
+                  {year}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <Layout>
@@ -61,21 +114,7 @@ function Admin() {
             <h2 className="text-[#184623] text-3xl font-medium">
               Carbon Pool Admin
             </h2>
-            <div className="flex items-center hover:cursor-pointer border-2 border-[#184623] py-2 px-4 gap-3">
-              <p>October 2022 (Current Period)</p>
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M6.34317 7.75732L4.92896 9.17154L12 16.2426L19.0711 9.17157L17.6569 7.75735L12 13.4142L6.34317 7.75732Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
+            <DateSelection></DateSelection>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="border-2 border-[#184623] p-4 grid gap-2">
@@ -117,12 +156,12 @@ function Admin() {
                 </tr>
               </thead>
 
-              <tbody>
-                {transactions.map((transaction, index) => {
+              <tbody className="relative">
+                {filteredTransactions.map((transaction, index) => {
                   return (
                     <tr key={index}>
                       <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                        {transaction.date}
+                        {transaction.date.toLocaleDateString()}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2 text-gray-700">
                         {transaction.amount} Tons
@@ -191,13 +230,21 @@ function Admin() {
                 })}
               </tbody>
             </table>
+            {filteredTransactions.length === 0 && (
+              <div className="w-full text-center font-bold uppercase text-2xl">
+                No Transactions
+              </div>
+            )}
           </div>
         </div>
       ) : (
         <div className="pt-24">
-          <h2 className="text-[#184623] text-3xl font-medium pb-8">
-            Carbon Credit Expiries
-          </h2>
+          <div className="flex items-center justify-between pb-8">
+            <h2 className="text-[#184623] text-3xl font-medium">
+              Carbon Credit Expiries
+            </h2>
+            <DateSelection></DateSelection>
+          </div>
           <div className="overflow-x-auto text-left pb-12">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-[#F3EFCD] border-2 border-[#184623]">
@@ -224,11 +271,11 @@ function Admin() {
               </thead>
 
               <tbody>
-                {transactions.map((transaction, index) => {
+                {filteredTransactions.map((transaction, index) => {
                   return (
                     <tr key={index}>
                       <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                        {transaction.date}
+                        {transaction.date.toLocaleDateString()}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2 text-gray-700">
                         {transaction.amount} Tons
@@ -274,6 +321,11 @@ function Admin() {
                 })}
               </tbody>
             </table>
+            {filteredTransactions.length === 0 && (
+              <div className="w-full text-center font-bold uppercase text-2xl">
+                No Transactions
+              </div>
+            )}
           </div>
         </div>
       )}
