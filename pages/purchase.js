@@ -1,10 +1,50 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { useSnackbar } from "notistack";
 import Layout from "../components/Layout";
 import PurchaseModal from "../components/purchase-modal";
+import { slowConnection } from "../solanacodes/config";
+import { loadCarbonProgram, mintCarbonCredit } from "../contract/utils";
 
 function Purchase() {
   const [tons, setTons] = useState(2);
   const [showModal, setShowModal] = useState(false);
+
+  const wallet = useAnchorWallet();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
+  const assertWalletConnected = useCallback(() => {
+    if (!wallet) {
+      enqueueSnackbar("Please connect your wallet!", { variant: "error" });
+      return false;
+    }
+    return true;
+  }, [enqueueSnackbar, wallet]);
+
+  const onClickPurchase = useCallback(async () => {
+    if (assertWalletConnected()) {
+      let stakeSnackbar = undefined;
+      try {
+        stakeSnackbar = enqueueSnackbar("Purchasing...", {
+          variant: "info",
+          persist: true,
+        });
+        const program = await loadCarbonProgram(slowConnection, wallet);
+        await mintCarbonCredit(program, wallet, tons);
+        enqueueSnackbar("Done", {
+          variant: "success",
+        });
+        setShowModal(true);
+      } catch (error) {
+        console.log({ error });
+        enqueueSnackbar(error?.message, {
+          variant: "error",
+        });
+      } finally {
+        if (stakeSnackbar) closeSnackbar(stakeSnackbar);
+      }
+    }
+  }, [assertWalletConnected, closeSnackbar, enqueueSnackbar, wallet, tons]);
 
   const transactions = [
     {
@@ -79,7 +119,7 @@ function Purchase() {
           </div>
           <button
             className="text-white bg-[#184623] py-3 hover:opacity-50"
-            onClick={() => setShowModal(true)}
+            onClick={onClickPurchase}
           >
             Purchase
           </button>

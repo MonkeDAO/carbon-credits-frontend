@@ -1,5 +1,6 @@
 import Logo from "../assets/images/logo.png";
 import Image from "next/image";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 function Navbar() {
   return (
@@ -7,7 +8,9 @@ function Navbar() {
       <div className="relative w-32">
         <Image src={Logo} alt="Logo" layout="responsive" objectFit="contain" />
       </div>
-      <button className="bg-[#4A8F5D] px-6">Connect wallet</button>
+      <button className="bg-[#4A8F5D] px-6">
+        <WalletMultiButton />
+      </button>
     </nav>
   );
 }
