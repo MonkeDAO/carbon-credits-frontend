@@ -1,4 +1,5 @@
 import * as anchor from "@project-serum/anchor";
+import axios from "axios";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
@@ -208,4 +209,39 @@ export const getMintConfigState = async (program: anchor.Program<Carbon>) => {
     oneCreditPrice: mintConfigState.oneCreditPrice.toNumber(),
     creator: mintConfigState.creator.toBase58(),
   };
+};
+
+export const getUserPurchaseHistory = async (
+  program: anchor.Program<Carbon>,
+  wallet: anchor.Wallet
+) => {
+  if (!wallet?.publicKey) {
+    return [];
+  }
+  const carbonReceiptList = await program.account.carbonReceipt.all([
+    {
+      memcmp: {
+        offset: 8,
+        bytes: wallet.publicKey.toBase58(),
+      },
+    },
+  ]);
+  return carbonReceiptList.map((receipt) => ({
+    buyer: receipt.account.buyer.toBase58(),
+    mint: receipt.account.mint.toBase58(),
+    time: receipt.account.time.toNumber(),
+    amount: receipt.account.amount.toNumber(),
+    isExpired: receipt.account.isExpired,
+  }));
+};
+
+export const getSolPrice = async () => {
+  try {
+    const result = await axios.get(
+      "https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT"
+    );
+    return result.data.price;
+  } catch (error) {
+    return null;
+  }
 };
