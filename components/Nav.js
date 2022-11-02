@@ -8,9 +8,7 @@ function Navbar() {
       <div className="relative w-32">
         <Image src={Logo} alt="Logo" layout="responsive" objectFit="contain" />
       </div>
-      <button className="bg-[#4A8F5D] px-6">
-        <WalletMultiButton />
-      </button>
+      <WalletMultiButton className="bg-[#4A8F5D] px-6" />
     </nav>
   );
 }

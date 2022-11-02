@@ -7,12 +7,11 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import {
   GlowWalletAdapter,
   PhantomWalletAdapter,
-  SlopeWalletAdapter,
   SolflareWalletAdapter,
-  TorusWalletAdapter,
   SolletWalletAdapter,
+  TorusWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
-import React, { FC, useMemo } from "react";
+import { useMemo } from "react";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");

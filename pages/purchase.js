@@ -18,39 +18,6 @@ function Purchase() {
   const wallet = useAnchorWallet();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
-  const assertWalletConnected = useCallback(() => {
-    if (!wallet) {
-      enqueueSnackbar("Please connect your wallet!", { variant: "error" });
-      return false;
-    }
-    return true;
-  }, [enqueueSnackbar, wallet]);
-
-  const onClickPurchase = useCallback(async () => {
-    if (assertWalletConnected()) {
-      let stakeSnackbar = undefined;
-      try {
-        stakeSnackbar = enqueueSnackbar("Purchasing...", {
-          variant: "info",
-          persist: true,
-        });
-        const program = await loadCarbonProgram(slowConnection, wallet);
-        await mintCarbonCredit(program, wallet, tons);
-        enqueueSnackbar("Done", {
-          variant: "success",
-        });
-        setShowModal(true);
-      } catch (error) {
-        console.log({ error });
-        enqueueSnackbar(error?.message, {
-          variant: "error",
-        });
-      } finally {
-        if (stakeSnackbar) closeSnackbar(stakeSnackbar);
-      }
-    }
-  }, [assertWalletConnected, closeSnackbar, enqueueSnackbar, wallet, tons]);
-
   const [purchaseHistory, setPurchaseHistory] = useState([]);
   const [solPrice, setSolPrice] = useState(1);
 
@@ -79,6 +46,47 @@ function Purchase() {
   useEffect(() => {
     fetchSolPrice();
   }, [fetchSolPrice]);
+
+  const assertWalletConnected = useCallback(() => {
+    if (!wallet) {
+      enqueueSnackbar("Please connect your wallet!", { variant: "error" });
+      return false;
+    }
+    return true;
+  }, [enqueueSnackbar, wallet]);
+
+  const onClickPurchase = useCallback(async () => {
+    if (assertWalletConnected()) {
+      let stakeSnackbar = undefined;
+      try {
+        stakeSnackbar = enqueueSnackbar("Purchasing...", {
+          variant: "info",
+          persist: true,
+        });
+        const program = await loadCarbonProgram(slowConnection, wallet);
+        await mintCarbonCredit(program, wallet, tons);
+        await fetchPurchaseHistory();
+        enqueueSnackbar("Done", {
+          variant: "success",
+        });
+        setShowModal(true);
+      } catch (error) {
+        console.log({ error });
+        enqueueSnackbar(error?.message, {
+          variant: "error",
+        });
+      } finally {
+        if (stakeSnackbar) closeSnackbar(stakeSnackbar);
+      }
+    }
+  }, [
+    assertWalletConnected,
+    enqueueSnackbar,
+    wallet,
+    tons,
+    fetchPurchaseHistory,
+    closeSnackbar,
+  ]);
 
   const costOfOneCredit = parseFloat(
     process.env.NEXT_PUBLIC_COST_OF_ONE_CREDIT
@@ -201,24 +209,26 @@ function Purchase() {
           </thead>
 
           <tbody>
-            {purchaseHistory.map((transaction, index) => {
-              return (
-                <tr key={index}>
-                  <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
-                    {new Date(transaction.time * 1000).toLocaleDateString()}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                    {transaction.amount} Tons
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                    ${transaction.amount * costOfOneCredit}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                    {transaction.impact || "?"}
-                  </td>
-                </tr>
-              );
-            })}
+            {purchaseHistory
+              .sort((a, b) => b?.time - a?.time)
+              .map((transaction, index) => {
+                return (
+                  <tr key={index}>
+                    <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+                      {new Date(transaction.time * 1000).toLocaleDateString()}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
+                      {transaction.amount} Tons
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
+                      ${transaction.amount * costOfOneCredit}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-2 text-gray-700">
+                      {transaction.impact || "?"}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
       </div>
