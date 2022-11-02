@@ -115,7 +115,7 @@ function Purchase() {
 
   return (
     <Layout>
-      <h2 className="text-[#184623] text-3xl font-medium pt-24">
+      <h2 className="text-[#184623] text-3xl font-medium pt-12 md:pt-24">
         Purchase Carbon Credits
       </h2>
       {showModal && <PurchaseModal setShowModal={setShowModal} />}
@@ -132,11 +132,11 @@ function Purchase() {
           background:
             "linear-gradient(180deg, rgba(243, 239, 205, 0) 0%, #F3EFCD 99.46%)",
         }}
-        className="py-12 shadow-[4px_4px_0_#4A8F5D] border-2 border-[#184623]"
+        className="py-12 shadow-[4px_4px_0_#4A8F5D] border-2 border-[#184623] px-4"
       >
         <div className="max-w-xs mx-auto grid gap-4">
           <span className="font-bold text-2xl">Purchase Credits</span>
-          <div className="grid grid-cols-[1fr_2fr_1fr] items-center mx-auto">
+          <div className="grid grid-cols-3 sm:grid-cols-[1fr_2fr_1fr] items-center mx-auto">
             <button
               className="bg-[#4A8F5D] h-full text-white py-4 font-extrabold"
               onClick={() => {

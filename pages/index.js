@@ -5,7 +5,7 @@ import NFT from "../assets/images/nft.png";
 export default function Home() {
   return (
     <Layout>
-      <h1 className="text-[#184623] font-bold text-5xl pt-24">
+      <h1 className="text-[#184623] font-bold text-5xl pt-12 md:pt-24">
         Take action on carbon emissions today
       </h1>
       <p className="text-left py-12">
@@ -19,9 +19,9 @@ export default function Home() {
       <h2 className="text-[#184623] text-3xl font-medium pb-8">
         The Carbon NFT
       </h2>
-      <div className="grid grid-cols-[1fr_2fr] text-left">
+      <div className="grid sm:grid-cols-[1fr_2fr] text-left">
         <Image src={NFT} alt="Carbon NFT" width={500} height={500} />
-        <div className="pl-6">
+        <div className="py-12 sm:py-0 sm:pl-6">
           <p className="pb-6">
             Solana is a carbon neutral network, and the Foundation is working
             towards making it carbon negative.

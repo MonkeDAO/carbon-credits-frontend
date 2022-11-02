@@ -110,13 +110,13 @@ function Admin() {
       </div>
       {showOrders ? (
         <div className="pt-24">
-          <div className="flex items-center justify-between pb-8">
+          <div className="flex items-center justify-between pb-8 flex-col sm:flex-row gap-4">
             <h2 className="text-[#184623] text-3xl font-medium">
               Carbon Pool Admin
             </h2>
             <DateSelection></DateSelection>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-4">
             <div className="border-2 border-[#184623] p-4 grid gap-2">
               <p className="font-bold">Total credits ordered</p>
               <p className="text-3xl font-black">2143 tons</p>
@@ -128,7 +128,7 @@ function Admin() {
               <p>2 Orders</p>
             </div>
           </div>
-          <div className="flex items-center justify-between pt-8 pb-4">
+          <div className="flex items-center justify-between pt-8 pb-4 flex-col sm:flex-row">
             <h3 className="font-bold text-2xl">Orders</h3>
             <p className="underline font-bold text-[#184623] hover:cursor-pointer">
               Purchase all outstanding credit orders
@@ -239,7 +239,7 @@ function Admin() {
         </div>
       ) : (
         <div className="pt-24">
-          <div className="flex items-center justify-between pb-8">
+          <div className="flex items-center justify-between pb-8 flex-col sm:flex-row gap-4">
             <h2 className="text-[#184623] text-3xl font-medium">
               Carbon Credit Expiries
             </h2>
