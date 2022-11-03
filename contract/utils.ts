@@ -162,15 +162,25 @@ export const mintCarbonCredit = async (
     ),
     createMintToInstruction(newNftMint, newNftToken, wallet.publicKey, 1, [
       newNftKp,
-    ]),
+    ])
+  );
+
+  const purchaseTokenAccount = await getAssociatedTokenAddress(
+    mintKeyPk,
+    wallet.publicKey
+  );
+
+  const adminSplTokenAccount = await getAssociatedTokenAddress(
+    mintKeyPk,
+    adminWalletPk
+  );
+
+  transaction.add(
     program.instruction.carbonCredit(new anchor.BN(amount), {
       accounts: {
         user: wallet.publicKey,
         purchaseTokenMint: mintKeyPk,
-        purchaseTokenAccount: await getAssociatedTokenAddress(
-          mintKeyPk,
-          wallet.publicKey
-        ),
+        purchaseTokenAccount: purchaseTokenAccount,
         carbonReceipt: carbonCreditReceiptKp.publicKey,
         mintConfig: mintConfig,
         newNftMint: newNftMint,
@@ -178,10 +188,7 @@ export const mintCarbonCredit = async (
         newNftMasterEdition: newNftMasterEdition,
         newNftCreator: newNftCreator,
         admin: adminWalletPk,
-        adminSplTokenAccount: await getAssociatedTokenAddress(
-          mintKeyPk,
-          adminWalletPk
-        ),
+        adminSplTokenAccount: adminSplTokenAccount,
         tokenProgram: TOKEN_PROGRAM_ID,
         nftProgramId: TOKEN_METADATA_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
