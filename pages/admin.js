@@ -1,46 +1,111 @@
-import { useState } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { useSnackbar } from "notistack";
 import Layout from "../components/Layout";
+import { slowConnection } from "../solanacodes/config";
+import {
+  expireCarbonCredit,
+  getAllPurchaseHistory,
+  loadCarbonProgram,
+} from "../contract/utils";
+
+const EXPIRY_SECONDS = parseInt(process.env.NEXT_PUBLIC_EXPIRY_SECONDS);
+const costOfOneCredit = parseFloat(process.env.NEXT_PUBLIC_COST_OF_ONE_CREDIT);
 
 function Admin() {
   const [showOrders, setShowOrders] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(2022);
 
-  const transactions = [
-    {
-      date: new Date("12/04/22"),
-      amount: "13",
-      cost: "2560",
-      link: "https://monkedao.io/",
-      fulfilment: true,
-      expiryDate: "12/02/23",
-    },
-    {
-      date: new Date("12/02/22"),
-      amount: "14",
-      cost: "2780",
-      link: "https://monkedao.io/",
-      fulfilment: true,
-      expiryDate: "12/02/23",
-    },
-    {
-      date: new Date("12/02/23"),
-      amount: "2",
-      cost: "671",
-      link: "https://monkedao.io/",
-      fulfilment: false,
-      expiryDate: "12/02/23",
-    },
-  ];
+  const wallet = useAnchorWallet();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const fetchPurchaseHistory = useCallback(async () => {
+    const program = await loadCarbonProgram(slowConnection, wallet);
+    const purchaseHistoryLocal = await getAllPurchaseHistory(program, wallet);
+    setPurchaseHistory(purchaseHistoryLocal);
+  }, [wallet]);
+
+  useEffect(() => {
+    fetchPurchaseHistory();
+  }, [fetchPurchaseHistory]);
+
+  const transactions = useMemo(() => {
+    return purchaseHistory.map((x) => {
+      return {
+        ...x,
+        date: new Date(x.time * 1000),
+        amount: x.amount,
+        cost: (x.amount * costOfOneCredit).toFixed(2),
+        link: "https://monkedao.io/",
+        fulfilment: true,
+        expiryDate: new Date((x.time + EXPIRY_SECONDS) * 1000),
+      };
+    });
+  }, [purchaseHistory]);
 
   const yearChoices = [2022, 2023, 2024];
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    return (
-      transaction.date.getFullYear() === parseInt(selectedYear) &&
-      transaction.date.getMonth() === parseInt(selectedMonth) - 1
-    );
-  });
+  const filteredTransactions = useMemo(() => {
+    return transactions
+      .filter((transaction) => {
+        return (
+          transaction.date.getFullYear() === parseInt(selectedYear) &&
+          transaction.date.getMonth() === parseInt(selectedMonth) - 1
+        );
+      })
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [selectedMonth, selectedYear, transactions]);
+
+  const assertWalletConnected = useCallback(() => {
+    if (!wallet) {
+      enqueueSnackbar("Please connect your wallet!", { variant: "error" });
+      return false;
+    }
+    return true;
+  }, [enqueueSnackbar, wallet]);
+
+  const onClickExpire = useCallback(
+    async (carbonReceipt) => {
+      if (assertWalletConnected()) {
+        let stakeSnackbar = undefined;
+        try {
+          stakeSnackbar = enqueueSnackbar("Expiring...", {
+            variant: "info",
+            persist: true,
+          });
+          const program = await loadCarbonProgram(slowConnection, wallet);
+          await expireCarbonCredit(
+            program,
+            wallet,
+            carbonReceipt.mint,
+            carbonReceipt.publicKey,
+            carbonReceipt.buyer
+          );
+          await fetchPurchaseHistory();
+          enqueueSnackbar("Done", {
+            variant: "success",
+          });
+          setShowModal(true);
+        } catch (error) {
+          console.log({ error });
+          enqueueSnackbar(error?.message, {
+            variant: "error",
+          });
+        } finally {
+          if (stakeSnackbar) closeSnackbar(stakeSnackbar);
+        }
+      }
+    },
+    [
+      assertWalletConnected,
+      enqueueSnackbar,
+      wallet,
+      fetchPurchaseHistory,
+      closeSnackbar,
+    ]
+  );
 
   const DateSelection = () => {
     return (
@@ -311,11 +376,22 @@ function Admin() {
                         </a>
                       </td>
                       <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                        {transaction.expiryDate}
+                        {transaction.expiryDate.toLocaleDateString()}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2 text-red-700 underline font-bold hover:cursor-pointer">
-                        Expire NFT
-                      </td>
+                      {transaction.isExpired ? (
+                        <td className="whitespace-nowrap px-4 py-2 text-grey-700 underline font-bold">
+                          Expired
+                        </td>
+                      ) : (
+                        <td
+                          className="whitespace-nowrap px-4 py-2 text-red-700 underline font-bold hover:cursor-pointer"
+                          onClick={() => {
+                            onClickExpire(transaction);
+                          }}
+                        >
+                          Expire NFT
+                        </td>
+                      )}
                     </tr>
                   );
                 })}

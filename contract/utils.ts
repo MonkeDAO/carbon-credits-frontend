@@ -208,6 +208,74 @@ export const mintCarbonCredit = async (
   console.log("txSign", txSign);
 };
 
+export const expireCarbonCredit = async (
+  program: anchor.Program<Carbon>,
+  wallet: anchor.Wallet,
+  mintStr: string,
+  carbonReceipt: string,
+  buyer: string
+) => {
+  const { mintConfig, newNftCreator } = await getAllPDAs(program);
+
+  console.log({ mintStr });
+
+  const carbonCreditReceipt = new PublicKey(carbonReceipt);
+  const mintKeyPk = new PublicKey(mintStr);
+  const buyerPk = new PublicKey(buyer);
+  const nftMetadata = await getMetadataAccount(mintKeyPk);
+
+  const transaction = new anchor.web3.Transaction();
+
+  console.log({
+    admin: wallet.publicKey.toBase58(),
+    user: buyerPk.toBase58(),
+    carbonReceipt: carbonCreditReceipt.toBase58(),
+    mintConfig: mintConfig.toBase58(),
+    nftMint: mintKeyPk.toBase58(),
+    nftMetadata: nftMetadata.toBase58(),
+    newNftCreator: newNftCreator.toBase58(),
+    tokenProgram: TOKEN_PROGRAM_ID.toBase58(),
+    nftProgramId: TOKEN_METADATA_PROGRAM_ID.toBase58(),
+    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID.toBase58(),
+    systemProgram: anchor.web3.SystemProgram.programId.toBase58(),
+    rent: anchor.web3.SYSVAR_RENT_PUBKEY.toBase58(),
+    time: anchor.web3.SYSVAR_CLOCK_PUBKEY.toBase58(),
+  });
+
+  transaction.add(
+    program.instruction.expireCarbonCredit({
+      accounts: {
+        admin: wallet.publicKey,
+        user: buyerPk,
+        carbonReceipt: carbonCreditReceipt,
+        mintConfig: mintConfig,
+        nftMint: mintKeyPk,
+        nftMetadata: nftMetadata,
+        newNftCreator: newNftCreator,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        nftProgramId: TOKEN_METADATA_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        time: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+      },
+    })
+  );
+
+  try {
+    const txSign = await program.provider.send(transaction, []);
+    const txSignString = await slowConnection.confirmTransaction(txSign);
+    console.log("txSignString", txSignString);
+    console.log("txSign", txSign);
+  } catch (error) {
+    console.log("error", { error });
+    console.log("errorString", {
+      errorString: error.toString(),
+    });
+    throw error;
+  }
+};
+
 export const getMintConfigState = async (program: anchor.Program<Carbon>) => {
   const { mintConfig } = await getAllPDAs(program);
   const mintConfigState = await program.account.mintConfig.fetch(mintConfig);
@@ -233,13 +301,41 @@ export const getUserPurchaseHistory = async (
       },
     },
   ]);
-  return carbonReceiptList.map((receipt) => ({
-    buyer: receipt.account.buyer.toBase58(),
-    mint: receipt.account.mint.toBase58(),
-    time: receipt.account.time.toNumber(),
-    amount: receipt.account.amount.toNumber(),
-    isExpired: receipt.account.isExpired,
-  }));
+  return carbonReceiptList
+    .filter((receipt) => {
+      return (
+        receipt.account.mint.toBase58() !== "11111111111111111111111111111111"
+      );
+    })
+    .map((receipt) => ({
+      buyer: receipt.account.buyer.toBase58(),
+      mint: receipt.account.mint.toBase58(),
+      time: receipt.account.time.toNumber(),
+      amount: receipt.account.amount.toNumber(),
+      isExpired: receipt.account.isExpired,
+      publicKey: receipt.publicKey.toBase58(),
+    }));
+};
+
+export const getAllPurchaseHistory = async (
+  program: anchor.Program<Carbon>
+) => {
+  const carbonReceiptList = await program.account.carbonReceipt.all();
+  return carbonReceiptList
+    .filter((receipt) => {
+      return (
+        receipt.account.mint.toBase58() !== "11111111111111111111111111111111"
+      );
+    })
+    .map((receipt) => ({
+      buyer: receipt.account.buyer.toBase58(),
+      mint: receipt.account.mint.toBase58(),
+      time: receipt.account.time.toNumber(),
+      amount: receipt.account.amount.toNumber(),
+      isExpired: receipt.account.isExpired,
+      isFulfilled: receipt.account.isFulfilled,
+      publicKey: receipt.publicKey.toBase58(),
+    }));
 };
 
 export const getSolPrice = async () => {

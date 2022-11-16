@@ -228,6 +228,38 @@ export type Carbon = {
         }
       ];
       args: [];
+    },
+    {
+      name: "markFulfilled";
+      accounts: [
+        {
+          name: "admin";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "carbonReceipt";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [];
+    },
+    {
+      name: "markUnfulfilled";
+      accounts: [
+        {
+          name: "admin";
+          isMut: true;
+          isSigner: true;
+        },
+        {
+          name: "carbonReceipt";
+          isMut: true;
+          isSigner: false;
+        }
+      ];
+      args: [];
     }
   ];
   accounts: [
@@ -278,6 +310,10 @@ export type Carbon = {
           },
           {
             name: "isExpired";
+            type: "bool";
+          },
+          {
+            name: "isFulfilled";
             type: "bool";
           }
         ];
@@ -534,6 +570,38 @@ export const IDL: Carbon = {
       ],
       args: [],
     },
+    {
+      name: "markFulfilled",
+      accounts: [
+        {
+          name: "admin",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "carbonReceipt",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
+    {
+      name: "markUnfulfilled",
+      accounts: [
+        {
+          name: "admin",
+          isMut: true,
+          isSigner: true,
+        },
+        {
+          name: "carbonReceipt",
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [],
+    },
   ],
   accounts: [
     {
@@ -583,6 +651,10 @@ export const IDL: Carbon = {
           },
           {
             name: "isExpired",
+            type: "bool",
+          },
+          {
+            name: "isFulfilled",
             type: "bool",
           },
         ],
