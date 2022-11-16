@@ -8,6 +8,7 @@ import {
   getAllPurchaseHistory,
   loadCarbonProgram,
   markFulfillCarbonCredit,
+  markFulfillCarbonCreditMultiple,
 } from "../contract/utils";
 
 const EXPIRY_SECONDS = parseInt(process.env.NEXT_PUBLIC_EXPIRY_SECONDS);
@@ -147,6 +148,44 @@ function Admin() {
     ]
   );
 
+  const onClickMarkFulfilledAll = useCallback(async () => {
+    if (assertWalletConnected()) {
+      let stakeSnackbar = undefined;
+      try {
+        stakeSnackbar = enqueueSnackbar("Fulfilling...", {
+          variant: "info",
+          persist: true,
+        });
+        const program = await loadCarbonProgram(slowConnection, wallet);
+        await markFulfillCarbonCreditMultiple(
+          program,
+          wallet,
+          filteredTransactions
+            .filter((carbonReceipt) => !carbonReceipt.isFulfilled)
+            .map((carbonReceipt) => carbonReceipt.publicKey)
+        );
+        await fetchPurchaseHistory();
+        enqueueSnackbar("Done", {
+          variant: "success",
+        });
+      } catch (error) {
+        console.log({ error });
+        enqueueSnackbar(error?.message, {
+          variant: "error",
+        });
+      } finally {
+        if (stakeSnackbar) closeSnackbar(stakeSnackbar);
+      }
+    }
+  }, [
+    assertWalletConnected,
+    enqueueSnackbar,
+    wallet,
+    filteredTransactions,
+    fetchPurchaseHistory,
+    closeSnackbar,
+  ]);
+
   const DateSelection = () => {
     return (
       <div className="flex gap-2">
@@ -189,6 +228,32 @@ function Admin() {
     );
   };
 
+  const [
+    numCreditsOrdered,
+    numOrders,
+    numCreditsOutstanding,
+    numOrderOutstanding,
+  ] = useMemo(() => {
+    let numCreditsOrdered = 0;
+    let numOrders = 0;
+    let numCreditsOutstanding = 0;
+    let numOrderOutstanding = 0;
+    for (const transaction of filteredTransactions) {
+      numCreditsOrdered += transaction.amount;
+      numOrders += 1;
+      if (!transaction.fulfillment) {
+        numCreditsOutstanding += transaction.amount;
+        numOrderOutstanding += 1;
+      }
+    }
+    return [
+      numCreditsOrdered,
+      numOrders,
+      numCreditsOutstanding,
+      numOrderOutstanding,
+    ];
+  }, [filteredTransactions]);
+
   return (
     <Layout>
       <div className="bg-[#5B8D61] mx-auto flex items-center justify-center gap-4 absolute left-0 w-full">
@@ -224,18 +289,23 @@ function Admin() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="border-2 border-[#184623] p-4 grid gap-2">
               <p className="font-bold">Total credits ordered</p>
-              <p className="text-3xl font-black">2143 tons</p>
-              <p>32 Orders</p>
+              <p className="text-3xl font-black">{numCreditsOrdered} tons</p>
+              <p>{numOrders} Orders</p>
             </div>
             <div className="border-2 border-[#B99860] p-4 grid gap-2">
               <p className="font-bold">Total credits outstanding</p>
-              <p className="text-3xl font-black text-[#B99860]">26 tons</p>
-              <p>2 Orders</p>
+              <p className="text-3xl font-black text-[#B99860]">
+                {numCreditsOutstanding} tons
+              </p>
+              <p>{numOrderOutstanding} Orders</p>
             </div>
           </div>
           <div className="flex items-center justify-between pt-8 pb-4 flex-col sm:flex-row">
             <h3 className="font-bold text-2xl">Orders</h3>
-            <p className="underline font-bold text-[#184623] hover:cursor-pointer">
+            <p
+              className="underline font-bold text-[#184623] hover:cursor-pointer"
+              onClick={onClickMarkFulfilledAll}
+            >
               Purchase all outstanding credit orders
             </p>
           </div>

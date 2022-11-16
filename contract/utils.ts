@@ -9,9 +9,10 @@ import {
   MintLayout,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { slowConnection } from "solanacodes/config";
 import { Carbon, IDL } from "./carbon";
+import { sendAndConfirmTransactionListCustom1 } from "solanacodes/utils";
 
 const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID!;
 const TOKEN_MINT = process.env.NEXT_PUBLIC_TOKEN_MINT!;
@@ -290,6 +291,45 @@ export const markFulfillCarbonCredit = async (
     });
     throw error;
   }
+};
+
+export const markFulfillCarbonCreditMultiple = async (
+  program: anchor.Program<Carbon>,
+  wallet: anchor.Wallet,
+  carbonReceiptList: string[]
+) => {
+  if (carbonReceiptList.length === 0) {
+    return;
+  }
+  const transactionArr: Transaction[] = [];
+  const connection = program.provider.connection;
+
+  const promiseList = carbonReceiptList.map(async (carbonReceipt, i) => {
+    const carbonCreditReceipt = new PublicKey(carbonReceipt);
+
+    const txn = new anchor.web3.Transaction();
+
+    txn.add(
+      program.instruction.markFulfilled({
+        accounts: {
+          admin: wallet.publicKey,
+          carbonReceipt: carbonCreditReceipt,
+        },
+      })
+    );
+    txn.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+    txn.feePayer = wallet.publicKey;
+
+    transactionArr.push(txn);
+  });
+
+  await Promise.all(promiseList);
+
+  await sendAndConfirmTransactionListCustom1(
+    wallet,
+    connection,
+    transactionArr
+  );
 };
 
 export const getMintConfigState = async (program: anchor.Program<Carbon>) => {
