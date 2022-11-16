@@ -90,7 +90,6 @@ function Admin() {
           enqueueSnackbar("Done", {
             variant: "success",
           });
-          setShowModal(true);
         } catch (error) {
           console.log({ error });
           enqueueSnackbar(error?.message, {
