@@ -226,22 +226,6 @@ export const expireCarbonCredit = async (
 
   const transaction = new anchor.web3.Transaction();
 
-  console.log({
-    admin: wallet.publicKey.toBase58(),
-    user: buyerPk.toBase58(),
-    carbonReceipt: carbonCreditReceipt.toBase58(),
-    mintConfig: mintConfig.toBase58(),
-    nftMint: mintKeyPk.toBase58(),
-    nftMetadata: nftMetadata.toBase58(),
-    newNftCreator: newNftCreator.toBase58(),
-    tokenProgram: TOKEN_PROGRAM_ID.toBase58(),
-    nftProgramId: TOKEN_METADATA_PROGRAM_ID.toBase58(),
-    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID.toBase58(),
-    systemProgram: anchor.web3.SystemProgram.programId.toBase58(),
-    rent: anchor.web3.SYSVAR_RENT_PUBKEY.toBase58(),
-    time: anchor.web3.SYSVAR_CLOCK_PUBKEY.toBase58(),
-  });
-
   transaction.add(
     program.instruction.expireCarbonCredit({
       accounts: {
@@ -258,6 +242,38 @@ export const expireCarbonCredit = async (
         systemProgram: anchor.web3.SystemProgram.programId,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         time: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+      },
+    })
+  );
+
+  try {
+    const txSign = await program.provider.send(transaction, []);
+    const txSignString = await slowConnection.confirmTransaction(txSign);
+    console.log("txSignString", txSignString);
+    console.log("txSign", txSign);
+  } catch (error) {
+    console.log("error", { error });
+    console.log("errorString", {
+      errorString: error.toString(),
+    });
+    throw error;
+  }
+};
+
+export const markFulfillCarbonCredit = async (
+  program: anchor.Program<Carbon>,
+  wallet: anchor.Wallet,
+  carbonReceipt: string
+) => {
+  const carbonCreditReceipt = new PublicKey(carbonReceipt);
+
+  const transaction = new anchor.web3.Transaction();
+
+  transaction.add(
+    program.instruction.markFulfilled({
+      accounts: {
+        admin: wallet.publicKey,
+        carbonReceipt: carbonCreditReceipt,
       },
     })
   );

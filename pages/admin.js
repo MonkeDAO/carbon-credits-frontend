@@ -7,6 +7,7 @@ import {
   expireCarbonCredit,
   getAllPurchaseHistory,
   loadCarbonProgram,
+  markFulfillCarbonCredit,
 } from "../contract/utils";
 
 const EXPIRY_SECONDS = parseInt(process.env.NEXT_PUBLIC_EXPIRY_SECONDS);
@@ -38,8 +39,8 @@ function Admin() {
         date: new Date(x.time * 1000),
         amount: x.amount,
         cost: (x.amount * costOfOneCredit).toFixed(2),
-        link: "https://monkedao.io/",
-        fulfilment: true,
+        link: `https://solscan.io/token/${x.mint}?cluster=${process.env.NEXT_PUBLIC_SOLANA_NETWORK}#txs`,
+        fulfillment: x.isFulfilled,
         expiryDate: new Date((x.time + EXPIRY_SECONDS) * 1000),
       };
     });
@@ -48,7 +49,7 @@ function Admin() {
   const yearChoices = [2022, 2023, 2024];
 
   const filteredTransactions = useMemo(() => {
-    return transactions
+    const transactionList = transactions
       .filter((transaction) => {
         return (
           transaction.date.getFullYear() === parseInt(selectedYear) &&
@@ -56,6 +57,7 @@ function Admin() {
         );
       })
       .sort((a, b) => b.date.getTime() - a.date.getTime());
+    return transactionList;
   }, [selectedMonth, selectedYear, transactions]);
 
   const assertWalletConnected = useCallback(() => {
@@ -88,6 +90,44 @@ function Admin() {
             variant: "success",
           });
           setShowModal(true);
+        } catch (error) {
+          console.log({ error });
+          enqueueSnackbar(error?.message, {
+            variant: "error",
+          });
+        } finally {
+          if (stakeSnackbar) closeSnackbar(stakeSnackbar);
+        }
+      }
+    },
+    [
+      assertWalletConnected,
+      enqueueSnackbar,
+      wallet,
+      fetchPurchaseHistory,
+      closeSnackbar,
+    ]
+  );
+
+  const onClickMarkFulfilled = useCallback(
+    async (carbonReceipt) => {
+      if (assertWalletConnected()) {
+        let stakeSnackbar = undefined;
+        try {
+          stakeSnackbar = enqueueSnackbar("Fulfilling...", {
+            variant: "info",
+            persist: true,
+          });
+          const program = await loadCarbonProgram(slowConnection, wallet);
+          await markFulfillCarbonCredit(
+            program,
+            wallet,
+            carbonReceipt.publicKey
+          );
+          await fetchPurchaseHistory();
+          enqueueSnackbar("Done", {
+            variant: "success",
+          });
         } catch (error) {
           console.log({ error });
           enqueueSnackbar(error?.message, {
@@ -216,7 +256,7 @@ function Admin() {
                     Transaction
                   </th>
                   <th className="whitespace-nowrap px-4 py-2 text-left text-[#184623] font-semibold">
-                    Fulfilment
+                    fulfillment
                   </th>
                 </tr>
               </thead>
@@ -262,8 +302,13 @@ function Admin() {
                         </a>
                       </td>
                       <td className="whitespace-nowrap px-4 py-2 text-gray-700">
-                        {transaction.fulfilment ? (
-                          <p className="font-black underline hover:cursor-pointer">
+                        {!transaction.fulfillment ? (
+                          <p
+                            className="font-black underline hover:cursor-pointer"
+                            onClick={() => {
+                              onClickMarkFulfilled(transaction);
+                            }}
+                          >
                             Purchase Credits
                           </p>
                         ) : (
