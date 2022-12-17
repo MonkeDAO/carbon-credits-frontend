@@ -4,7 +4,7 @@ import NFT from "../assets/images/nft.png";
 function PurchaseModal({ setShowModal }) {
   return (
     <div className="w-full h-full fixed left-0 top-0 bg-[rgba(0,0,0,.5)] z-30 overflow-hidden grid items-center">
-      <div className="grid justify-center gap-8 items-center max-w-4xl bg-white py-12 px-24 mx-auto">
+      <div className="grid justify-center gap-8 items-center max-w-4xl bg-white py-12 px-4 sm:px-12 md:px-24 mx-12 lg:mx-auto">
         <span className="font-bold text-3xl">Purchase complete!</span>
         <div>
           <Image src={NFT} alt="Carbon NFT" height={250} width={250} />
